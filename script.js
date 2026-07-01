@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Form submission handler
-function handleSubmit(event) {
+async function handleSubmit(event) {
     event.preventDefault();
     
     // Check reCAPTCHA
@@ -103,36 +103,43 @@ function handleSubmit(event) {
     submitBtn.disabled = true;
     submitBtn.style.opacity = '0.7';
     
-    // Collect form data
-    const formData = {
-        name: document.getElementById('name').value,
-        email: document.getElementById('email').value,
-        phone: document.getElementById('phone').value,
-        subject: document.getElementById('subject').value,
-        message: document.getElementById('message').value,
-        timestamp: new Date().toISOString()
-    };
+    // Prepare form data for Web3Forms
+    const formData = new FormData(form);
+    formData.append("access_key", "5aa19e6f-634d-4143-adec-d9c2bb73aabb");
     
-    // Simulate sending (replace with actual API call)
-    setTimeout(() => {
-        // Hide form, show success
-        form.style.display = 'none';
-        successMessage.classList.add('show');
+    try {
+        const response = await fetch("https://api.web3forms.com/submit", {
+            method: "POST",
+            body: formData
+        });
         
-        // Scroll to success message
-        successMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const data = await response.json();
         
-        // Reset after 5 seconds
-        setTimeout(() => {
-            form.reset();
-            if (window.grecaptcha) grecaptcha.reset();
-            form.style.display = 'block';
-            successMessage.classList.remove('show');
-            btnText.textContent = originalText;
-            submitBtn.disabled = false;
-            submitBtn.style.opacity = '1';
-        }, 5000);
-    }, 1200);
+        if (response.ok) {
+            // Hide form, show success
+            form.style.display = 'none';
+            successMessage.classList.add('show');
+            
+            // Scroll to success message
+            successMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // Reset after 5 seconds
+            setTimeout(() => {
+                form.reset();
+                if (window.grecaptcha) grecaptcha.reset();
+                form.style.display = 'block';
+                successMessage.classList.remove('show');
+            }, 5000);
+        } else {
+            alert("Error: " + data.message);
+        }
+    } catch (error) {
+        alert("Something went wrong. Please try again.");
+    } finally {
+        btnText.textContent = originalText;
+        submitBtn.disabled = false;
+        submitBtn.style.opacity = '1';
+    }
 }
 
 // Smooth scroll for anchor links
